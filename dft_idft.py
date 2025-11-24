@@ -1,45 +1,56 @@
 import numpy as np
-import matplotlib.pyplot as py
+import matplotlib.pyplot as plt
 
-x = np.array([1, 2, 3, 6, 10, 11, 12, 13, 14, 5, 3, 2, 1, 10, 11])
+x = np.random.rand(64)
 N = len(x)
-Xr , Xi = np.zeros(N) , np.zeros(N)
-for k in range(N):
-    for n in range(N):
-        angle = 2*np.pi*k*n/N
-        Xr[k] +=x[n]*np.cos(angle)
-        Xi[k] += x[n]*np.sin(-angle)
-        X = Xr+1j*Xi
+omega = 2 * np.pi / N
 
-mag = np.sqrt(Xr**2 +Xi**2)
-phase = np.arctan2(Xi,Xr)
-### extra 
-X_ex = np.zeros(N , dtype = complex)
-for k in range(N):
-    for n in range(N):
-        angle = 2*np.pi*k*n/N
-        X_ex[k] += x[n]*np.exp(1j*-angle)
-#######
-# inverse dft
-t = np.zeros(N)
-for n in range(N):
-    for k in range(N):
-        angle = 2*np.pi*k*n/N
-        t[n]+= 1/N*(Xr[k]*np.cos(angle)-Xi[k]*np.sin(angle))
+z = [0] * N 
+
+for m in range(N): 
+    temp = 0
+    for n in range(N): 
+        y = np.exp(-1j * omega * m * n)
+        temp += x[n] * y
+    z[m] = temp  
+
+mag = [np.abs(val) for val in z]
+phase = [np.angle(val) for val in z]   
+
+X_fft = np.fft.fft(x)
+
+print("Discrete Fourier Transform is: ", z)
+
+plt.figure(figsize=(18,6))
+
+plt.subplot(2, 2, 1)
+plt.stem(range(N), z)
+plt.grid(True)
+plt.xlabel("index")
+plt.ylabel("X[k]")
+plt.title("Discrete Fourier Transform")
+
+plt.subplot(2, 2, 2)
+plt.stem(range(N), X_fft)
+plt.grid(True)
+plt.xlabel("index")
+plt.ylabel("X[k]")
+plt.title("Discrete Fourier Transform using FFT")
+
+plt.subplot(2, 2, 3)
+plt.stem(range(N), mag)
+plt.grid(True)
+plt.xlabel("index")
+plt.ylabel("Magnitude")
+plt.title("Magnitude plot of X[k]")
+
+plt.subplot(2, 2, 4)
+plt.stem(range(N), phase)
+plt.grid(True)
+plt.xlabel("index")
+plt.ylabel("Radian")
+plt.title("Phase plot of X[k]")
 
 
-py.figure(figsize=(14,8))
-py.subplot(2,2,1)
-py.stem(np.arange(N),mag)
-py.subplot(2,2,2)
-py.stem(np.arange(N) , phase)
-py.subplot(2,2,3)
-py.stem(np.arange(N), t)
-py.subplot(2,2,4)
-py.stem(np.arange(N), np.abs(X_ex)) # as stem cant display complex
-py.tight_layout()
-py.show()
-
-
-
-
+plt.tight_layout()
+plt.show()

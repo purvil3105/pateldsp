@@ -1,86 +1,55 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from scipy import signal
 
-def z_transform_analysis(num, den):
-    """
-    Perform Z-transform analysis for a given transfer function H(z).
-     Parameters:
-        num : list or ndarray
-            Numerator coefficients of H(z)
-        den : list or ndarray
-            Denominator coefficients of H(z)
-    """
+# Given impulse response
+h = [1, 2, 3, 4, 5]
 
-    # ------------------- Zeros, Poles, Gain -------------------
-    zeros, poles, gain = signal.tf2zpk(num, den)
+# ---------------- Z-TRANSFORM ----------------
+def z_transform(h, z):
+    H = 0
+    for n in range(len(h)):
+        H += h[n] * z**(-n)
+    return H
 
-    print("\n========= Z-Transform Analysis =========")
-    print("Numerator (b):", num)
-    print("Denominator (a):", den)
-    print("Zeros:", zeros)
-    print("Poles:", poles)
-    print("Gain:", gain)
+# Print symbolic Z-transform
+print("Z-Transform H(z) = ", end="")
+for i in range(len(h)):
+    if i == 0:
+        print(f"{h[i]}", end="")
+    else:
+        print(f" + {h[i]}z^-{i}", end="")
+print("\n")
 
-    # ROC
-    roc = np.max(np.abs(poles))
-    print(f"Region of Convergence (Causal): |z| > {roc:.4f}")
+# ---------------- MAGNITUDE vs |z| ----------------
+z_values = np.linspace(0.1, 2, 100)
+H_mag = []
 
-    # Frequency Response
-    w, h = signal.freqz(num, den)
-    mag_db = 20 * np.log10(np.abs(h))
-    phase = np.unwrap(np.angle(h))
+for z in z_values:
+    H_mag.append(abs(z_transform(h, z)))
 
-    # Plotting
-    fig, ax = plt.subplots(1, 2, figsize=(13, 6))
-    fig.suptitle("Z-Transform System Analysis", fontsize=15, fontweight='bold')
+plt.plot(z_values, H_mag)
+plt.title("Magnitude of H(z) vs |z|")
+plt.xlabel("|z|")
+plt.ylabel("|H(z)|")
+plt.grid(True)
+plt.show()
 
-    # ===== LEFT: Pole-Zero Plot =====
-    ax[0].set_title("Pole-Zero Plot", fontsize=13)
-    ax[0].set_xlabel("Real")
-    ax[0].set_ylabel("Imaginary")
-    ax[0].grid(True, linestyle='--', alpha=0.6)
+# ---------------- ROC VISUALIZATION ----------------
+theta = np.linspace(0, 2*np.pi, 400)
+unit_circle = np.exp(1j * theta)
 
-    # Unit circle
-    uc = plt.Circle((0, 0), 1, fill=False, color='black', linestyle='--', linewidth=1.5)
-    ax[0].add_artist(uc)
+plt.plot(unit_circle.real, unit_circle.imag, label="Unit Circle")
+plt.fill(unit_circle.real*3, unit_circle.imag*3, color='lightgreen', alpha=0.3,
+         label="ROC: |z| > 0")
+plt.scatter(0, 0, color='red', marker='x', label="Excluded Point z=0")
 
-    # Plot zeros & poles
-    ax[0].scatter(np.real(zeros), np.imag(zeros), marker='o',
-                  facecolors='blue', edgecolors='cyan', s=120, label="Zeros")
-    ax[0].scatter(np.real(poles), np.imag(poles), marker='x',
-                  color='orange', s=140, label="Poles")
+plt.title("ROC for Finite-Length Causal Sequence")
+plt.xlabel("Real Part")
+plt.ylabel("Imaginary Part")
+plt.axis('equal')
+plt.grid(True)
+plt.legend()
+plt.show()
 
-    ax[0].legend()
-
-    # === FIX: Proper axis limits ===
-    all_points = np.concatenate((zeros, poles, [1, -1, 1j, -1j]))
-    limit = np.max(np.abs(all_points)) * 1.3
-    ax[0].set_xlim(-limit, limit)
-    ax[0].set_ylim(-limit, limit)
-
-    ax[0].set_aspect('equal', 'box')   # ensure perfect circle
-
-    # ===== RIGHT: Magnitude and Phase =====
-    ax[1].set_title("Magnitude & Phase Response", fontsize=13)
-    ax[1].set_xlabel("Normalized Frequency (×π rad/sample)")
-    ax[1].set_ylabel("Magnitude (dB)", color='purple')
-
-    ax[1].plot(w/np.pi, mag_db, linewidth=2, color='purple')
-    ax[1].grid(True, linestyle='--', alpha=0.6)
-
-    # Phase response
-    axP = ax[1].twinx()
-    axP.set_ylabel("Phase (radians)", color='green')
-    axP.plot(w/np.pi, phase, linestyle='--', color='green', linewidth=1.8)
-
-    plt.tight_layout()
-    plt.show()
-
-
-# ---------------------- Example Usage ----------------------
-if __name__ == "__main__":
-    num = [0.0675, 0.1349, 0.0675]
-    den = [1.0, -1.14298, 0.4128]
-
-    z_transform_analysis(num, den)
+print("ROC: |z| > 0 (Entire z-plane except origin)")
+print("System Type: Causal FIR System")

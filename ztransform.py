@@ -1,37 +1,24 @@
-import numpy as np
-from scipy.signal import zpk2tf
+import sympy as sp
 
-import  matplotlib.pyplot as plt
+# Define symbols
+n, z, a = sp.symbols('n z a', real=True)
 
-zeros=np.array([1,0.5])
-pole=np.array([2,0.8,0.6])
-gain=1
+# Define unit step function u[n]
+def unit_step(n):
+    return sp.Piecewise((1, n >= 0), (0, True))
 
-b,a=zpk2tf(zeros,pole,gain)
+# Define the impulse response h[n] = a^n * u[n]
+h_n = a**n * unit_step(n)
 
-print(b)
-print(a)
+# Compute the Z-transform manually (using summation)
+H_z = sp.summation(h_n * z**(-n), (n, 0, sp.oo))  # sum from n=0 to infinity (causal)
 
-roc=max(abs(pole))
-print(roc)
+# Simplify the result
+H_z_simplified = sp.simplify(H_z)
 
-plt.scatter(np.real(zeros),np.imag(zeros),marker='o',label='zeros')
-plt.scatter(np.real(pole),np.imag(pole),marker='x',label='pole')
+# Display the result
+print("Z-transform H(z):")
+sp.pprint(H_z_simplified)
 
-theta=np.linspace(0,2*np.pi,500)
-plt.plot(np.cos(theta),np.sin(theta))
-
-
-
-# transfer
-import numpy as np
-from scipy.signal import residue
-
-b = [1, -0.5]          
-a = [1, -0.8, -0.1]
-
-r,p,k=residue(b,a);
-
-print(r)
-print(p)
-print(k)
+# Region of Convergence (ROC)
+print("\nROC: |z| > |a|  (for convergence of causal system)")
